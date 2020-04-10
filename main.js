@@ -17,6 +17,8 @@ const days = document.getElementById("days");
 const covidRes = document.getElementById("covidRes");
 const covidAmt = document.getElementById("covidAmt");
 const daysRes = document.getElementById("daysRes");
+const covidRange = document.getElementById("covidRange");
+const daysAgo = document.getElementById("daysAgo");
 let chart;
 let deltaChart;
 let globalData;
@@ -179,6 +181,7 @@ function renderDeltaChart(data) {
 }
 let a = 0;
 let b = 0;
+let series = {};
 
 function getColor(value) {
     if (value === 0) {
@@ -201,34 +204,12 @@ function getColor(value) {
     }
     return am4core.color("#FF0000");
 }
-async function main() {
-    const json = await fetch("https://pomber.github.io/covid19/timeseries.json");
-    const data = await json.json();
-    /*const confirmed = Array(100).fill(undefined).map((_, i) => confirmedLists.map(country => country[i]).reduce((t, v) => t + v)).filter(num => !Number.isNaN(num));
-    const { equation } = regression.exponential(confirmed.map((x, i) => [i, x]));
-    const [a, b] = equation;*/
-    globalData = data;
-    Object.keys(data).forEach(country => {
-            countries.innerHTML += `<option>${country}</option>`
-        })
-        // Create map instance
-    const map = am4core.create("chartdiv", am4maps.MapChart);
 
-    // Set map definition
-    map.geodata = am4geodata_worldLow;
-
-    // Set projection
-    map.projection = new am4maps.projections.Miller();
-
-    // Create map polygon series
-    const polygonSeries = map.series.push(new am4maps.MapPolygonSeries());
-
-    // Make map load polygon (like country names) data from GeoJSON
-    polygonSeries.useGeodata = true;
+function getMapData(data, idx) {
     const seriesData = [];
     const countriesDone = [];
     Object.keys(data).forEach(country => {
-        const confirmed = data[country][data[country].length - 1].confirmed;
+        const confirmed = data[country][idx /*data[country].length - 1*/ ].confirmed;
         const pair = Object.entries(codes).find(([code, c]) => c === country);
         if (pair) {
             const code = pair[0];
@@ -258,27 +239,37 @@ async function main() {
             fill: getColor(0) //am4core.color("#DDDDDD")
         })
     })
-    var polygonTemplate = polygonSeries.mapPolygons.template;
-    polygonTemplate.tooltipText = "{name}";
-    //polygonTemplate.fill = am4core.color("#74B266");
+    return seriesData;
+}
+async function main() {
+    const json = await fetch("https://pomber.github.io/covid19/timeseries.json");
+    const data = await json.json();
+    /*const confirmed = Array(100).fill(undefined).map((_, i) => confirmedLists.map(country => country[i]).reduce((t, v) => t + v)).filter(num => !Number.isNaN(num));
+    const { equation } = regression.exponential(confirmed.map((x, i) => [i, x]));
+    const [a, b] = equation;*/
+    globalData = data;
+    Object.keys(data).forEach(country => {
+            countries.innerHTML += `<option>${country}</option>`
+        })
+        // Create map instance
+    const map = am4core.create("chartdiv", am4maps.MapChart);
 
-    // Create hover state and set alternative fill color
-    //var hs = polygonTemplate.states.create("hover");
-    //hs.properties.fill = am4core.color("#FFCCCC");
+    // Set map definition
+    map.geodata = am4geodata_worldLow;
 
-    // Remove Antarctica
+    // Set projection
+    map.projection = new am4maps.projections.Miller();
+
+    // Create map polygon series
+    const polygonSeries = map.series.push(new am4maps.MapPolygonSeries());
+
+    // Make map load polygon (like country names) data from GeoJSON
+    polygonSeries.useGeodata = true;
+    polygonSeries.data = getMapData(data, Object.values(data)[0].length - 1);
     polygonSeries.exclude = ["AQ"];
-
-    // Add some data
-    polygonSeries.data = seriesData;
-    /*polygonSeries.heatRules.push({
-        target: polygonTemplate,
-        property: "fill",
-        min: am4core.color("#DDDDDD"),
-        max: am4core.color("#ED7B84"),
-    })*/
+    series = polygonSeries;
+    var polygonTemplate = polygonSeries.mapPolygons.template;
     polygonTemplate.tooltipText = "{name}: {value}";
-
     polygonTemplate.propertyFields.fill = "fill";
     renderChart(data);
     renderDeltaChart(data);
@@ -296,6 +287,9 @@ async function main() {
     });
     a = confirmed.a;
     b = confirmed.b;
+    const currentDays = chart.data.datasets[0].data.length - 1;
+    covidRange.setAttribute("min", 0);
+    covidRange.setAttribute("max", currentDays);
 }
 main();
 let logarithmOn = false;
@@ -359,5 +353,31 @@ setInterval(() => {
         if (covidAmt.value) {
             daysRes.innerHTML = Math.round(((Math.log(parseNum(covidAmt.value) / a) / b) - currentDays)) + " Days";
         }
+        const dayz = currentDays - Number(covidRange.value);
+        const dayzMessage = dayz === 0 ? "Today" : (dayz === 1 ? "Yesterday" : `${dayz} Days Ago`);
+        daysAgo.innerHTML = dayzMessage;
     }
 }, 30)
+covidRange.onchange = () => {
+    series.data = getMapData(globalData, Number(covidRange.value));
+}
+let playing = false;
+const playpause = document.getElementById("playpause");
+playpause.onclick = () => {
+    if (playing === false) {
+        playing = true;
+        playpause.innerHTML = `<i class="fa fa-pause w3-xlarge"></i>`
+    } else {
+        playing = false;
+        playpause.innerHTML = `<i class="fa fa-play w3-xlarge"></i>`
+    }
+}
+setInterval(() => {
+    if (playing) {
+        const oldValue = covidRange.value;
+        covidRange.value = Math.min(Number(covidRange.value) + 1, Number(covidRange.getAttribute("max")));
+        if (oldValue !== covidRange.value) {
+            series.data = getMapData(globalData, Number(covidRange.value));
+        }
+    }
+}, 200)
