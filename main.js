@@ -179,6 +179,28 @@ function renderDeltaChart(data) {
 }
 let a = 0;
 let b = 0;
+
+function getColor(value) {
+    if (value === 0) {
+        return am4core.color("#DDDDDD");
+    }
+    if (value <= 100) {
+        return am4core.color("#FFBBBB");
+    }
+    if (value <= 1000) {
+        return am4core.color("#FF9999");
+    }
+    if (value <= 25000) {
+        return am4core.color("#FF8888");
+    }
+    if (value <= 100000) {
+        return am4core.color("#FF6666");
+    }
+    if (value <= 250000) {
+        return am4core.color("#FF4444");
+    }
+    return am4core.color("#FF0000");
+}
 async function main() {
     const json = await fetch("https://pomber.github.io/covid19/timeseries.json");
     const data = await json.json();
@@ -187,8 +209,77 @@ async function main() {
     const [a, b] = equation;*/
     globalData = data;
     Object.keys(data).forEach(country => {
-        countries.innerHTML += `<option>${country}</option>`
+            countries.innerHTML += `<option>${country}</option>`
+        })
+        // Create map instance
+    const map = am4core.create("chartdiv", am4maps.MapChart);
+
+    // Set map definition
+    map.geodata = am4geodata_worldLow;
+
+    // Set projection
+    map.projection = new am4maps.projections.Miller();
+
+    // Create map polygon series
+    const polygonSeries = map.series.push(new am4maps.MapPolygonSeries());
+
+    // Make map load polygon (like country names) data from GeoJSON
+    polygonSeries.useGeodata = true;
+    const seriesData = [];
+    const countriesDone = [];
+    Object.keys(data).forEach(country => {
+        const confirmed = data[country][data[country].length - 1].confirmed;
+        const pair = Object.entries(codes).find(([code, c]) => c === country);
+        if (pair) {
+            const code = pair[0];
+            seriesData.push({
+                id: code,
+                name: country === "Burma" ? "Myanmar" : country,
+                value: confirmed,
+                fill: getColor(confirmed) //am4core.color("#DDDDDD")
+            })
+            countriesDone.push(code);
+        }
+        if (country === "US") {
+            seriesData.push({
+                id: "US",
+                name: "United States",
+                value: confirmed,
+                fill: getColor(confirmed) //am4core.color("#DDDDDD")
+            })
+            countriesDone.push("US");
+        }
     })
+    Object.keys(codes).filter(code => !countriesDone.includes(code)).forEach(code => {
+        seriesData.push({
+            id: code,
+            name: codes[code],
+            value: 0,
+            fill: getColor(0) //am4core.color("#DDDDDD")
+        })
+    })
+    var polygonTemplate = polygonSeries.mapPolygons.template;
+    polygonTemplate.tooltipText = "{name}";
+    //polygonTemplate.fill = am4core.color("#74B266");
+
+    // Create hover state and set alternative fill color
+    //var hs = polygonTemplate.states.create("hover");
+    //hs.properties.fill = am4core.color("#FFCCCC");
+
+    // Remove Antarctica
+    polygonSeries.exclude = ["AQ"];
+
+    // Add some data
+    polygonSeries.data = seriesData;
+    /*polygonSeries.heatRules.push({
+        target: polygonTemplate,
+        property: "fill",
+        min: am4core.color("#DDDDDD"),
+        max: am4core.color("#ED7B84"),
+    })*/
+    polygonTemplate.tooltipText = "{name}: {value}";
+
+    polygonTemplate.propertyFields.fill = "fill";
     renderChart(data);
     renderDeltaChart(data);
     const confirmed = extract({
