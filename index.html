@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@2.9.3/dist/Chart.min.js"></script>
+    <link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css">
+    <script src="regression.js"></script>
+    <script src="format.js"></script>
+    <title>Covid 19</title>
+</head>
+
+<body>
+    <button class="w3-button w3-hover-lightblue w3-blue w3-margin" id="log">Toggle Log Scale</button>
+    <button class="w3-button w3-hover-lightblue w3-blue w3-margin" id="hide">Toggle Projections</button>
+    <select class="w3-select w3-third w3-right w3-margin" id="country">
+        <option>World</option>
+    </select>
+    <canvas id="canvas"></canvas>
+    <canvas id="deltaCanvas"></canvas>
+    <div class="w3-margin">
+        <h1>Projections*:</h1>
+        <p class="w3-small">*This projections are all based on data currently available, and they don't take into account the invevitable end of the outbreak (it will tell you how many days it will take to reach 10 trillion cases, and impossible number). Do not misinterpret
+            them as truth. These projections are performed on worldwide data - not on any specific country.</p>
+        <p>The amount of coronavirus cases in
+            <select id="days">
+                <option>1</option>
+                <option>2</option>
+                <option>3</option>
+                <option>4</option>
+                <option>5</option>
+                <option>6</option>
+                <option>7</option>
+                <option>8</option>
+                <option>9</option>
+                <option>10</option>
+                <option>11</option>
+                <option>12</option>
+                <option>13</option>
+                <option>14</option>
+            </select> days: <span id="covidRes"></span></p>
+        <p>The number of days it will take for the coronavirus cases to reach <input id="covidAmt">:<span id="daysRes"></span></p>
+    </div>
+    <script src="main.js "></script>
+</body>
+
+</html>
