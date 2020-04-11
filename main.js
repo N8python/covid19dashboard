@@ -8,6 +8,11 @@ Chart.scaleService.updateScaleDefaults('logarithmic', {
         }
     }
 });
+Date.prototype.addDays = function(days) {
+    var date = new Date(this.valueOf());
+    date.setDate(date.getDate() + days);
+    return date;
+}
 const canvas = document.getElementById("canvas");
 const ctx = canvas.getContext("2d");
 const deltaCanvas = document.getElementById("deltaCanvas");
@@ -55,6 +60,12 @@ function extract({
     }
 
 
+}
+
+function current(key, data) {
+    const lists = Object.entries(data).filter(([country]) => countries.value === "World" ? true : country === countries.value).map(([_, country]) => country.map(day => day[key]));
+    const list = Array(lists[0].length).fill(undefined).map((_, i) => lists.map(country => country[i]).reduce((t, v) => t + v)).filter(num => !Number.isNaN(num));
+    return list[list.length - 1];
 }
 
 function extractDelta({
@@ -273,6 +284,9 @@ async function main() {
     polygonTemplate.propertyFields.fill = "fill";
     renderChart(data);
     renderDeltaChart(data);
+    document.getElementById("confirmed").innerHTML = current("confirmed", data).toLocaleString();
+    document.getElementById("deaths").innerHTML = current("deaths", data).toLocaleString();
+    document.getElementById("recovered").innerHTML = current("recovered", data).toLocaleString();
     const confirmed = extract({
         key: "confirmed",
         data,
@@ -345,13 +359,32 @@ countries.onchange = () => {
     } else {
         document.getElementById("hide").removeAttribute("disabled");
     }
+    document.getElementById("confirmed").innerHTML = current("confirmed", globalData).toLocaleString();
+    document.getElementById("deaths").innerHTML = current("deaths", globalData).toLocaleString();
+    document.getElementById("recovered").innerHTML = current("recovered", globalData).toLocaleString();
+}
+
+function ithify(num) {
+    if (num.toString().endsWith("1")) {
+        return num + "st"
+    }
+    if (num.toString().endsWith("2")) {
+        return num + "nd"
+    }
+    if (num.toString().endsWith("3")) {
+        return num + "rd"
+    }
+    return num + "th"
 }
 setInterval(() => {
     if (chart) {
         const currentDays = chart.data.datasets[0].data.length - 1;
         covidRes.innerHTML = format(Math.round(a * Math.exp(b * (Number(days.value) + currentDays))));
         if (covidAmt.value) {
-            daysRes.innerHTML = Math.round(((Math.log(parseNum(covidAmt.value) / a) / b) - currentDays)) + " Days";
+            const dayz = Math.round(((Math.log(parseNum(covidAmt.value) / a) / b) - currentDays));
+            const date = new Date().addDays(dayz);
+            const month = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"][date.getMonth()];
+            daysRes.innerHTML = ` ${dayz} Days (${month} ${ithify(date.getDate())}, ${date.getFullYear()})`;
         }
         const dayz = currentDays - Number(covidRange.value);
         const dayzMessage = dayz === 0 ? "Today" : (dayz === 1 ? "Yesterday" : `${dayz} Days Ago`);

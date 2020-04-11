@@ -26,6 +26,27 @@
     </div>
     <button class="w3-margin w3-round w3-button w3-red w3-hover-pink" id="playpause"><i class="fa fa-play w3-xlarge"></i></button>
     <br>
+    <div class="w3-quarter w3-margin">
+        <h1>Confirmed:</h1>
+        <h1 id="confirmed"></h1>
+    </div>
+    <div class="w3-quarter w3-margin">
+        <h1>Deaths:</h1>
+        <h1 id="deaths"></h1>
+    </div>
+    <div class="w3-quarter w3-margin">
+        <h1>Recovered:</h1>
+        <h1 id="recovered"></h1>
+    </div>
+    <br>
+    <br>
+    <br>
+    <br>
+    <br>
+    <br>
+    <br>
+    <br>
+    <br>
     <button class="w3-button w3-hover-lightblue w3-blue w3-margin" id="log">Toggle Log Scale</button>
     <button class="w3-button w3-hover-lightblue w3-blue w3-margin" id="hide">Toggle Projections</button>
     <select class="w3-select w3-third w3-right w3-margin" id="country">
@@ -35,7 +56,7 @@
     <canvas id="deltaCanvas"></canvas>
     <div class="w3-margin">
         <h1>Projections*:</h1>
-        <p class="w3-small">*This projections are all based on data currently available, and they don't take into account the invevitable end of the outbreak (it will tell you how many days it will take to reach 10 trillion cases, and impossible number). Do not misinterpret
+        <p class="w3-small">*This projections are all based on data currently available, and they don't take into account the invevitable end of the outbreak (it will tell you how many days it will take to reach 10 trillion cases - an impossible number). Do not misinterpret
             them as truth. These projections are performed on worldwide data - not on any specific country.</p>
         <p>The amount of coronavirus cases in
             <select id="days">
